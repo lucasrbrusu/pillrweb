@@ -1,0 +1,200 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pillr | Privacy Policy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --primary: #9B59B6; --primary-strong: #8E44AD; --text: #1A1A2E; --muted: #6B7280; --card: #ffffff; --bg: #f7f5fb; --border: #e5e7eb; --shadow: 0 12px 32px rgba(0,0,0,0.08); }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Manrope','Helvetica Neue','Helvetica','sans-serif'; background: var(--bg); color: var(--text); }
+    a { color: inherit; text-decoration: none; }
+    .container { width: min(900px, calc(100% - 32px)); margin: 0 auto; }
+    header { background: linear-gradient(135deg, #9B59B6, #8E44AD); color: #fff; padding: 40px 0 46px; }
+    .back { color: rgba(255,255,255,0.9); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); font-size: 14px; margin-top: 14px; }
+    h1 { margin: 14px 0 10px; font-size: clamp(30px, 4vw, 40px); letter-spacing: -0.02em; }
+    .lede { margin: 0 0 8px; max-width: 700px; color: rgba(255,255,255,0.88); line-height: 1.5; }
+    .meta { margin: 0; color: rgba(255,255,255,0.8); font-size: 14px; }
+    main { padding: 28px 0 42px; }
+    .stack { display: grid; gap: 18px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px 18px 20px; box-shadow: var(--shadow); }
+    h2 { margin: 0 0 10px; font-size: 22px; letter-spacing: -0.01em; }
+    h3 { margin: 0 0 8px; font-size: 18px; letter-spacing: -0.01em; }
+    p { margin: 0 0 10px; color: var(--muted); line-height: 1.55; }
+    ul { margin: 0 0 10px 18px; color: var(--muted); line-height: 1.5; }
+    .tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background: #f2ebf8; border-radius: 10px; color: var(--primary-strong); font-weight: 600; font-size: 13px; }
+    footer { text-align: center; padding: 18px 0 26px; color: var(--muted); font-size: 13px; }
+    footer a { color: var(--primary-strong); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a class="back" href="./">< Back to Pillr</a>
+      <div class="eyebrow">Pillr Legal</div>
+      <h1>Privacy Policy</h1>
+      <p class="lede">This Privacy Policy explains how we collect, use, share, and protect information when you use the Pillr mobile app and related services.</p>
+      <p class="meta"><strong>Effective date:</strong> 20 December 2025 · <strong>App:</strong> Pillr · <strong>Data Controller:</strong> Lucas Rusu ("Pillr", "we", "us") · <strong>Contact:</strong> <a href="mailto:ruzotechdev@gmail.com">ruzotechdev@gmail.com</a></p>
+    </div>
+  </header>
+  <main class="container">
+    <div class="stack">
+      <section class="card">
+        <h2>1) What we collect</h2>
+        <h3>A) Account & profile information (Supabase Auth + Profiles)</h3>
+        <p>When you create an account, we collect:</p>
+        <ul>
+          <li>Email address</li>
+          <li>Password (stored securely by our authentication provider; we do not store passwords in plain text)</li>
+          <li>Username (used for searchable profiles)</li>
+          <li>Name (if provided)</li>
+        </ul>
+        <p>We also store profile preferences and goals you set, such as:</p>
+        <ul>
+          <li>Daily health goals (e.g., sleep/water/calorie goals)</li>
+          <li>App preferences (e.g., theme, language, currency)</li>
+        </ul>
+        <p>If you choose a profile picture, we collect: profile image you select from your photo library (stored as part of your profile data).</p>
+        <h3>B) Your in-app content (Supabase Database)</h3>
+        <p>Pillr stores the content you create so it can sync across devices. This may include:</p>
+        <ul>
+          <li>Habits and habit completions</li>
+          <li>Tasks, task participants, and task invites (where applicable)</li>
+          <li>Routines and related routine items</li>
+          <li>Reminders</li>
+          <li>Notes</li>
+          <li>Chores and groceries lists</li>
+          <li>Calendar-related entries (where you create or store them inside Pillr)</li>
+          <li>Finance entries, including transactions and budget groups (if you use the finance module)</li>
+          <li>Groups, group members, and group invites (if you use group features)</li>
+        </ul>
+        <h3>C) Health information (Supabase Database)</h3>
+        <p>If you use the health features, you may store:</p>
+        <ul>
+          <li>Daily health tracking (for example sleep/water and similar metrics you enter)</li>
+          <li>Food entries and nutrition-related notes you enter</li>
+        </ul>
+        <p><strong>Important:</strong> Health-related information can be treated as special category data under UK/EU data protection law depending on what you enter. You control what you choose to record.</p>
+        <h3>D) Friends, searchable profiles & online status (Supabase Database)</h3>
+        <p>If you use social features:</p>
+        <ul>
+          <li>We store friend requests and friendships</li>
+          <li>We allow users to search profiles by username</li>
+          <li>We store online/last active signals in a user status record (e.g., last_seen) to show online indicators in the app</li>
+        </ul>
+        <h3>E) AI Chat Agent (Supabase Edge Function → OpenAI)</h3>
+        <p>If you use the AI chat feature:</p>
+        <ul>
+          <li>We send the text you type to our backend (a Supabase Edge Function named agent) to generate AI responses.</li>
+          <li>That backend forwards relevant text to OpenAI to generate the response.</li>
+          <li>The agent may create action proposals (suggested actions such as creating a habit/task/reminder). These proposals are stored so you can review/approve/cancel them.</li>
+          <li><strong>Do not include sensitive personal data</strong> (medical diagnoses, financial account numbers, passwords, etc.) in AI messages.</li>
+        </ul>
+        <h3>F) Device data, diagnostics & local storage</h3>
+        <p>We collect and/or store:</p>
+        <ul>
+          <li>Basic device/app info (app version, OS version) for reliability</li>
+          <li>Local device storage (AsyncStorage) for: authentication session caching (including auth token storage), onboarding flags, focus session data and app usage metrics stored on-device, user preferences that help the app load faster.</li>
+        </ul>
+        <h3>G) Notifications (Expo Notifications)</h3>
+        <p>Pillr can schedule local notifications on your device for reminders and prompts. Local notifications are scheduled and displayed by your device’s operating system.</p>
+      </section>
+
+      <section class="card">
+        <h2>2) How we use your information</h2>
+        <ul>
+          <li>Create and manage your account and authenticate you</li>
+          <li>Store and sync your Pillr content across devices</li>
+          <li>Provide health, habit, task, routine, finance and home features you use</li>
+          <li>Enable friends, profile search, groups and invites (where you choose to use them)</li>
+          <li>Show online/last active indicators based on recent activity</li>
+          <li>Schedule reminders and notifications (if enabled)</li>
+          <li>Provide AI agent assistance (if enabled)</li>
+          <li>Maintain security, prevent abuse, and fix bugs</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>3) Legal bases (UK GDPR / EU GDPR)</h2>
+        <p>Where applicable, we process personal data under:</p>
+        <ul>
+          <li>Contract (to provide the Service you request)</li>
+          <li>Legitimate interests (to keep the Service secure, reliable, and improve it)</li>
+          <li>Consent (for optional features where required; and for certain categories of health data depending on what you enter)</li>
+          <li>Legal obligation (where we must comply with law)</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>4) How we share information</h2>
+        <p>We do not sell your personal information. We share information only as needed with:</p>
+        <ul>
+          <li>Supabase (authentication, database, server functions) to run the Service.</li>
+          <li>RevenueCat to manage subscription entitlements (Premium access). Purchases themselves are processed by Apple/Google.</li>
+          <li>Apple App Store / Google Play for billing and subscription management.</li>
+          <li>OpenAI (via our backend) to generate AI chat responses when you use the AI feature.</li>
+          <li>Service providers for infrastructure and operations if we add them (e.g., error monitoring). If added, we will update this policy.</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>5) International data transfers</h2>
+        <p>Our providers may process data outside your country. Where required, we rely on appropriate safeguards for international transfers (such as contractual protections or adequacy mechanisms).</p>
+      </section>
+
+      <section class="card">
+        <h2>6) Data retention</h2>
+        <ul>
+          <li>We keep your account and Service data until you delete it or delete your account, unless we must retain some information for legal/security reasons.</li>
+          <li>Backups may persist for a limited time after deletion for disaster recovery.</li>
+          <li>AI-related action proposals may be retained until deleted or until account deletion, depending on how they are stored.</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>7) Security</h2>
+        <p>We use reasonable administrative, technical, and organizational measures designed to protect information (such as access controls and encryption in transit). No system is perfectly secure.</p>
+      </section>
+
+      <section class="card">
+        <h2>8) Your rights</h2>
+        <p>Depending on where you live (including the UK/EU), you may have rights to:</p>
+        <ul>
+          <li>Access, correct, or delete your data</li>
+          <li>Object to or restrict processing</li>
+          <li>Data portability</li>
+          <li>Withdraw consent (where consent is used)</li>
+        </ul>
+        <p>You can request rights by emailing <a href="mailto:ruzotechdev@gmail.com">ruzotechdev@gmail.com</a>.</p>
+      </section>
+
+      <section class="card">
+        <h2>9) Account deletion</h2>
+        <p>You can delete your account from within the app (e.g., Profile / Settings → Delete Account). When you delete your account, we delete or de-identify your data where feasible, subject to limited retention for security/legal reasons and backup retention windows.</p>
+      </section>
+
+      <section class="card">
+        <h2>10) Children</h2>
+        <p>Pillr is not intended for children under [13/16] (choose the minimum age you want to enforce). We do not knowingly collect data from children.</p>
+      </section>
+
+      <section class="card">
+        <h2>11) Changes to this policy</h2>
+        <p>We may update this policy. If changes are material, we will notify you in-app or by other appropriate means.</p>
+      </section>
+
+      <section class="card">
+        <h2>12) Contact</h2>
+        <p><strong>Privacy:</strong> <a href="mailto:ruzotechdev@gmail.com">ruzotechdev@gmail.com</a><br><strong>Support:</strong> <a href="mailto:ruzotechdev@gmail.com">ruzotechdev@gmail.com</a></p>
+      </section>
+    </div>
+  </main>
+  <footer>
+    <a href="./">Home</a> &middot; <a href="terms-of-service.html">Terms of Service</a> &middot; <a href="community-guidelines.html">Community Guidelines</a>
+  </footer>
+</body>
+</html>

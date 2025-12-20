@@ -1,0 +1,421 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pillr | Balanced Life Organizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #9B59B6;
+      --primary-strong: #8E44AD;
+      --accent-blue: #6366F1;
+      --accent-pink: #EC4899;
+      --text: #1A1A2E;
+      --muted: #6B7280;
+      --card: #ffffff;
+      --bg: #f7f5fb;
+      --border: #e5e7eb;
+      --shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Manrope','Helvetica Neue','Helvetica','sans-serif';
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    .container { width: min(1100px, calc(100% - 32px)); margin: 0 auto; }
+    header {
+      background:
+        radial-gradient(circle at 15% 20%, rgba(155, 89, 182, 0.25), transparent 32%),
+        radial-gradient(circle at 85% 10%, rgba(99, 102, 241, 0.22), transparent 28%),
+        linear-gradient(135deg, #9B59B6, #8E44AD);
+      color: #fff;
+      padding: 48px 0 56px;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 36px;
+      align-items: center;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 999px;
+      font-size: 14px;
+      letter-spacing: 0.01em;
+    }
+    .eyebrow::before, .eyebrow::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .eyebrow::before { background: #fff; }
+    .eyebrow::after { background: rgba(255,255,255,0.65); }
+    h1 { font-size: clamp(32px, 4vw, 44px); margin: 18px 0 12px; letter-spacing: -0.02em; }
+    .hero p { margin: 0 0 18px; color: rgba(255,255,255,0.85); line-height: 1.5; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0 12px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease, color 150ms ease;
+      border: 1px solid transparent;
+    }
+    .btn.primary {
+      background: #fff;
+      color: var(--text);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.16);
+    }
+    .btn.primary:hover { transform: translateY(-1px); }
+    .btn.ghost {
+      background: transparent;
+      color: #fff;
+      border-color: rgba(255,255,255,0.55);
+    }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .chip {
+      background: rgba(255,255,255,0.14);
+      color: #fff;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      letter-spacing: 0.01em;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    .hero-card {
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 18px;
+      padding: 18px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.18);
+    }
+    .hero-card h3 { margin: 0 0 12px; font-size: 18px; }
+    .hero-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+    .hero-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .hero-list .icon {
+      width: 28px; height: 28px;
+      display: grid; place-items: center;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.18);
+      font-size: 14px;
+    }
+    main { padding: 42px 0 56px; }
+    .panel {
+      background: var(--card);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 22px 22px 26px;
+      margin-bottom: 28px;
+    }
+    .panel h2 { margin: 0 0 8px; font-size: 24px; letter-spacing: -0.01em; }
+    .panel p { margin: 0; color: var(--muted); }
+    .search-bar {
+      position: relative;
+      margin: 18px 0 14px;
+    }
+    .search-bar input {
+      width: 100%;
+      padding: 14px 14px 14px 46px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 15px;
+      color: var(--text);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.05);
+      outline: none;
+      transition: border 140ms ease, box-shadow 140ms ease;
+    }
+    .search-bar input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 14px 34px rgba(155,89,182,0.18);
+    }
+    .search-icon {
+      position: absolute;
+      top: 50%;
+      left: 14px;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 18px;
+      pointer-events: none;
+    }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+    .tag {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 140ms ease;
+      color: var(--muted);
+    }
+    .tag.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      box-shadow: 0 12px 30px rgba(155,89,182,0.22);
+    }
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      background: #fff;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(0,0,0,0.08); }
+    .card .title { font-size: 17px; margin: 0; letter-spacing: -0.01em; }
+    .card .category {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--primary-strong);
+      background: #f3eaf9;
+      padding: 8px 10px;
+      border-radius: 999px;
+      align-self: flex-start;
+    }
+    .card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .tagline { display: flex; gap: 8px; flex-wrap: wrap; }
+    .small-tag {
+      background: #f4f4f8;
+      color: #4b5563;
+      border-radius: 8px;
+      padding: 6px 9px;
+      font-size: 12px;
+    }
+    .empty { text-align: center; color: var(--muted); padding: 26px 12px; }
+    footer { text-align: center; color: var(--muted); font-size: 13px; padding: 18px 0 28px; }
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; }
+      header { padding: 38px 0 44px; }
+      .hero-card { order: -1; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container hero">
+      <div>
+        <div class="eyebrow">Pillr - Life Management</div>
+        <h1>Four pillars for a calmer, balanced life.</h1>
+        <p>Pillr brings micro habits, daily planning, health tracking, home routines, and finances into one focused app. Keep everything connected, stay accountable with friends, and protect your streaks with gentle reminders.</p>
+        <div class="cta-row">
+          <a class="btn primary" href="#" aria-label="Get the Pillr app">Get the app</a>
+          <a class="btn ghost" href="mailto:info@pillr.app" aria-label="Email the Pillr team">Contact the team</a>
+        </div>
+        <div class="chip-row">
+          <span class="chip">Micro habits</span>
+          <span class="chip">Planning</span>
+          <span class="chip">Health</span>
+          <span class="chip">Home</span>
+          <span class="chip">Finance</span>
+          <span class="chip">Friends</span>
+        </div>
+      </div>
+      <div class="hero-card">
+        <h3>What you can do</h3>
+        <ul class="hero-list">
+          <li><span class="icon">&#10003;</span><div><strong>Stack small wins.</strong><br>Set daily/weekly micro habits with streak freeze support.</div></li>
+          <li><span class="icon">&#10003;</span><div><strong>Plan & focus.</strong><br>Timebox tasks, run focus sessions, and countdown to key dates.</div></li>
+          <li><span class="icon">&#10003;</span><div><strong>Track wellness.</strong><br>Log mood, water, sleep, calories, and health notes.</div></li>
+          <li><span class="icon">&#10003;</span><div><strong>Stay accountable.</strong><br>Invite friends, build groups, and share tasks securely.</div></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+  <main class="container">
+    <section class="panel">
+      <h2>Search Pillr basics</h2>
+      <p>Find quick answers about the app. Try keywords like "budget", "sleep", "habits", or "friends".</p>
+      <div class="search-bar">
+        <span class="search-icon">?</span>
+        <input id="searchInput" type="search" placeholder="Search features, tips, and FAQs..." aria-label="Search Pillr information">
+      </div>
+      <div class="tag-row">
+        <button class="tag" data-tag="">All</button>
+        <button class="tag" data-tag="habits">Habits</button>
+        <button class="tag" data-tag="planning">Planning</button>
+        <button class="tag" data-tag="health">Health</button>
+        <button class="tag" data-tag="home">Home</button>
+        <button class="tag" data-tag="finance">Finance</button>
+        <button class="tag" data-tag="social">Friends</button>
+        <button class="tag" data-tag="focus">Focus</button>
+      </div>
+      <div id="results" class="results-grid"></div>
+      <div id="emptyState" class="empty" style="display:none;">No matches yet. Try another keyword.</div>
+    </section>
+    <section class="panel">
+      <h2>Share the app</h2>
+      <p>Copy this page to your domain so people can learn what Pillr does and find the right features faster.</p>
+    </section>
+  </main>
+  <footer>Pillr - Life management across habits, planning, health, home, and finance. <a href="privacy-policy.html">Privacy Policy</a> &middot; <a href="terms-of-service.html">Terms of Service</a> &middot; <a href="community-guidelines.html">Community Guidelines</a></footer>
+  <script>
+    const entries = [
+      {
+        title: 'Micro habits and streaks',
+        category: 'Habits',
+        tag: 'habits',
+        description: 'Build small daily or weekly habits, set reminders, and freeze streaks when life gets busy.'
+      },
+      {
+        title: 'Daily planning and tasks',
+        category: 'Planning',
+        tag: 'planning',
+        description: 'Prioritize tasks by date, time, or priority, add subtasks, and keep everything visible on your calendar.'
+      },
+      {
+        title: 'Countdowns and routines',
+        category: 'Planning',
+        tag: 'planning',
+        description: 'Create countdown timers for milestones and save morning or evening routines you can run in one tap.'
+      },
+      {
+        title: 'Health tracking',
+        category: 'Health',
+        tag: 'health',
+        description: 'Log mood, water intake, sleep, calories, and meals so you can see how wellness trends with your schedule.'
+      },
+      {
+        title: 'Home chores and groceries',
+        category: 'Home',
+        tag: 'home',
+        description: 'Keep shared chores, recurring reminders, and grocery lists organized so home stays on track.'
+      },
+      {
+        title: 'Finance and budgets',
+        category: 'Finance',
+        tag: 'finance',
+        description: 'Track income and expenses, build budget envelopes, monitor recurring payments, and view spending charts.'
+      },
+      {
+        title: 'Friends, groups, and sharing',
+        category: 'Social',
+        tag: 'social',
+        description: 'Add friends, accept requests, create groups, and share tasks or routines for accountability.'
+      },
+      {
+        title: 'Notifications you control',
+        category: 'Planning',
+        tag: 'planning',
+        description: 'Toggle reminders for habits, tasks, health, and routines so you only get the nudges you want.'
+      },
+      {
+        title: 'Focus mode',
+        category: 'Focus',
+        tag: 'focus',
+        description: 'Start distraction-free sessions, pause, resume, and record time spent focusing on what matters.'
+      },
+      {
+        title: 'Notes and privacy',
+        category: 'Habits',
+        tag: 'habits',
+        description: 'Save notes alongside tasks or health logs and protect sensitive items with a password when needed.'
+      },
+      {
+        title: 'Insights and trends',
+        category: 'Health',
+        tag: 'health',
+        description: 'View charts that summarize activity, wellness logs, and app usage to spot what helps your routines stick.'
+      }
+    ];
+
+    const searchInput = document.getElementById('searchInput');
+    const results = document.getElementById('results');
+    const emptyState = document.getElementById('emptyState');
+    const tags = document.querySelectorAll('.tag');
+    let activeTag = '';
+
+    const render = (items) => {
+      results.innerHTML = '';
+      if (!items.length) {
+        emptyState.style.display = 'block';
+        return;
+      }
+      emptyState.style.display = 'none';
+      items.forEach((item) => {
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="category">${item.category}</div>
+          <h3 class="title">${item.title}</h3>
+          <p>${item.description}</p>
+          <div class="tagline">
+            <span class="small-tag">#${item.tag}</span>
+            <span class="small-tag">Pillr</span>
+          </div>
+        `;
+        results.appendChild(card);
+      });
+    };
+
+    const filterItems = () => {
+      const query = searchInput.value.trim().toLowerCase();
+      const filtered = entries.filter((item) => {
+        const text = [item.title, item.description, item.category, item.tag].join(' ').toLowerCase();
+        const matchesQuery = !query || text.includes(query);
+        const matchesTag = !activeTag || item.tag === activeTag;
+        return matchesQuery && matchesTag;
+      });
+      render(filtered);
+    };
+
+    searchInput.addEventListener('input', filterItems);
+    tags.forEach((tag) => {
+      tag.addEventListener('click', () => {
+        const selected = tag.dataset.tag;
+        activeTag = selected;
+        tags.forEach((button) => button.classList.toggle('active', button.dataset.tag === selected));
+        filterItems();
+      });
+    });
+
+    // init
+    tags[0].classList.add('active');
+    render(entries);
+  </script>
+</body>
+</html>
+
+
+
+
+
