@@ -146,6 +146,7 @@ function renderUsers(users) {
           <button class="btn outline" data-action="remove-premium" data-user-id="${escapeHtml(user.user_id)}">Remove premium</button>
           <button class="btn warning" data-action="suspend" data-user-id="${escapeHtml(user.user_id)}">Suspend 7 days</button>
           <button class="btn outline" data-action="activate" data-user-id="${escapeHtml(user.user_id)}">Restore active</button>
+          <button class="btn danger" data-action="delete-user" data-user-id="${escapeHtml(user.user_id)}">Delete user</button>
         </div>
       </article>
     `;
@@ -272,6 +273,13 @@ async function handleUserAction(action, userId) {
         reason: 'Account restored by admin dashboard',
       });
       showNotice(els.usersNotice, 'User restored to active.', 'success');
+    }
+    if (action === 'delete-user') {
+      const confirmed = window.confirm('Delete this user permanently? This cannot be undone.');
+      if (!confirmed) return;
+
+      await invokeFunction('admin-delete-user', { user_id: userId });
+      showNotice(els.usersNotice, 'User deleted successfully.', 'success');
     }
     await searchUsers();
     await loadOverview();

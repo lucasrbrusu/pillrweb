@@ -36,6 +36,7 @@ From your app project root, copy the folders under `supabase/functions/` into yo
 supabase functions deploy admin-check-access
 supabase functions deploy admin-get-dashboard-metrics
 supabase functions deploy admin-search-users
+supabase functions deploy admin-delete-user
 supabase functions deploy admin-update-user-plan
 supabase functions deploy admin-set-account-status
 supabase functions deploy admin-list-reports
