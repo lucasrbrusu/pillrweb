@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pillaflow Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="layout">
+    <header class="topbar">
+      <div class="brand">
+        <strong>Pillaflow Admin</strong>
+        <span id="adminIdentity">Loading admin profile…</span>
+      </div>
+      <div class="row">
+        <a class="btn outline" href="../index.html">Website</a>
+        <button class="btn primary" id="signOutBtn">Sign out</button>
+      </div>
+    </header>
+
+    <div class="shell">
+      <aside class="sidebar">
+        <h2>Control centre</h2>
+        <p>Manage premium access, reports, push notices, and app-wide config from one secured dashboard.</p>
+        <div id="permissionNotice" class="notice"></div>
+        <div class="nav-list">
+          <button class="nav-btn active" data-tab="overview">Overview <span>→</span></button>
+          <button class="nav-btn" data-tab="users">Users <span>→</span></button>
+          <button class="nav-btn" data-tab="reports">Reports <span>→</span></button>
+          <button class="nav-btn" data-tab="push">Push <span>→</span></button>
+          <button class="nav-btn" data-tab="config">Config <span>→</span></button>
+          <button class="nav-btn" data-tab="audit">Audit <span>→</span></button>
+        </div>
+      </aside>
+
+      <main class="content">
+        <section class="panel tab-panel" data-panel="overview">
+          <div class="section-head">
+            <div>
+              <h1>Operational overview</h1>
+              <p>See active usage, open moderation, and recent signups at a glance.</p>
+            </div>
+            <button class="btn outline" id="refreshOverviewBtn">Refresh</button>
+          </div>
+          <div class="metrics" id="metrics"></div>
+          <div class="grid-two" style="margin-top:18px;">
+            <div class="panel" style="padding:18px; box-shadow:none;">
+              <div class="section-head">
+                <div>
+                  <h2>Recent signups</h2>
+                  <p>Newest profiles created in your production database.</p>
+                </div>
+              </div>
+              <div id="recentSignups" class="card-list"></div>
+            </div>
+            <div class="panel" style="padding:18px; box-shadow:none;">
+              <div class="section-head">
+                <div>
+                  <h2>Recent admin actions</h2>
+                  <p>Quick view of the latest privileged changes.</p>
+                </div>
+              </div>
+              <div id="recentActions" class="card-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel tab-panel hidden" data-panel="users">
+          <div class="section-head">
+            <div>
+              <h2>User management</h2>
+              <p>Search users by username, email, full name, or auth UUID. Then grant premium or change account status.</p>
+            </div>
+          </div>
+          <div id="usersNotice" class="notice"></div>
+          <div class="toolbar">
+            <input id="userSearchInput" type="search" placeholder="Search users, emails, usernames, or UUIDs…">
+            <select id="userStatusFilter">
+              <option value="">All statuses</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="banned">Banned</option>
+            </select>
+            <button class="btn primary" id="searchUsersBtn">Search</button>
+          </div>
+          <div id="userResults" class="card-list"></div>
+          <div id="userEmpty" class="empty-state hidden">No users match this search yet.</div>
+        </section>
+
+        <section class="panel tab-panel hidden" data-panel="reports">
+          <div class="section-head">
+            <div>
+              <h2>Moderation reports</h2>
+              <p>Review incoming reports, record moderator notes, and mark them resolved.</p>
+            </div>
+            <button class="btn outline" id="refreshReportsBtn">Refresh</button>
+          </div>
+          <div id="reportsNotice" class="notice"></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Created</th>
+                  <th>Reporter</th>
+                  <th>Reported user</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="reportsTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel tab-panel hidden" data-panel="push">
+          <div class="section-head">
+            <div>
+              <h2>Push centre</h2>
+              <p>Send targeted push notifications without exposing device tokens in the browser.</p>
+            </div>
+          </div>
+          <div id="pushNotice" class="notice"></div>
+          <form id="pushForm" class="controls">
+            <div class="form-grid two">
+              <label>
+                <div style="margin-bottom:8px;font-weight:700;">Title</div>
+                <input name="title" placeholder="Maintenance tonight" required>
+              </label>
+              <label>
+                <div style="margin-bottom:8px;font-weight:700;">Target mode</div>
+                <select name="mode" id="pushMode">
+                  <option value="users">Specific user IDs</option>
+                  <option value="segment">Segment</option>
+                </select>
+              </label>
+            </div>
+            <label>
+              <div style="margin-bottom:8px;font-weight:700;">Body</div>
+              <textarea name="body" placeholder="We will briefly pause sync at 11:00 PM." required></textarea>
+            </label>
+            <div class="form-grid two">
+              <label id="pushUserIdsWrap">
+                <div style="margin-bottom:8px;font-weight:700;">User IDs</div>
+                <input name="user_ids" placeholder="uuid1, uuid2, uuid3">
+              </label>
+              <label id="pushSegmentWrap" class="hidden">
+                <div style="margin-bottom:8px;font-weight:700;">Segment</div>
+                <select name="segment">
+                  <option value="all">All users with push tokens</option>
+                  <option value="premium">Premium users</option>
+                  <option value="active">Active users only</option>
+                </select>
+              </label>
+            </div>
+            <button class="btn primary" type="submit">Send push</button>
+          </form>
+        </section>
+
+        <section class="panel tab-panel hidden" data-panel="config">
+          <div class="section-head">
+            <div>
+              <h2>App configuration</h2>
+              <p>Control maintenance mode, banner copy, and the minimum supported mobile version from the dashboard.</p>
+            </div>
+            <button class="btn outline" id="refreshConfigBtn">Refresh</button>
+          </div>
+          <div id="configNotice" class="notice"></div>
+          <form id="configForm" class="controls">
+            <label class="row" style="justify-content:flex-start; gap: 12px;">
+              <input style="width:auto;" type="checkbox" id="maintenanceMode" name="maintenance_mode">
+              <span><strong>Maintenance mode enabled</strong></span>
+            </label>
+            <label>
+              <div style="margin-bottom:8px;font-weight:700;">Global banner text</div>
+              <input id="globalBanner" name="global_banner" placeholder="We are improving sync between 11PM and midnight.">
+            </label>
+            <label>
+              <div style="margin-bottom:8px;font-weight:700;">Minimum supported app version</div>
+              <input id="minSupportedVersion" name="min_supported_version" placeholder="1.0.0">
+            </label>
+            <button class="btn primary" type="submit">Save configuration</button>
+          </form>
+        </section>
+
+        <section class="panel tab-panel hidden" data-panel="audit">
+          <div class="section-head">
+            <div>
+              <h2>Audit trail</h2>
+              <p>Every privileged change should be reviewable. This feed comes from <code>public.admin_audit_logs</code>.</p>
+            </div>
+            <button class="btn outline" id="refreshAuditBtn">Refresh</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Actor</th>
+                  <th>Action</th>
+                  <th>Target</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="auditTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pillaflow Admin Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <main class="login-wrap">
+    <section class="login-card">
+      <div class="row" style="justify-content:space-between; margin-bottom: 18px;">
+        <div>
+          <div class="badge purple">Pillaflow Admin</div>
+          <h1>Sign in to the control centre</h1>
+          <p>Use a normal Supabase-authenticated account that has been added to <code>public.admin_users</code>. The dashboard itself never uses the service role in the browser.</p>
+        </div>
+      </div>
+      <div id="notice" class="notice"></div>
+      <form id="loginForm" class="controls">
+        <label>
+          <div style="margin-bottom:8px;font-weight:700;">Email</div>
+          <input type="email" name="email" placeholder="admin@pillaflow.com" required>
+        </label>
+        <label>
+          <div style="margin-bottom:8px;font-weight:700;">Password</div>
+          <input type="password" name="password" placeholder="Enter your password" required>
+        </label>
+        <button id="submitBtn" class="btn primary" type="submit">Sign in</button>
+      </form>
+      <div class="helper-links">
+        <a href="../index.html">Back to website</a>
+        <span>Need access? Add your user to <strong>admin_users</strong>.</span>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>
