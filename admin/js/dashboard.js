@@ -294,7 +294,16 @@ async function grantAchievements() {
 
     const granted = payload.granted_achievements || 0;
     const unlocked = payload.unlocked_badges || 0;
-    showNotice(els.usersNotice, `Granted ${granted} achievements and unlocked ${unlocked} badges.`, 'success');
+    const resolved = payload.resolved_auth_user_id ? ` • Auth user ${payload.resolved_auth_user_id}` : '';
+    const profileSync = Array.isArray(payload.profile_synced_fields) && payload.profile_synced_fields.length
+      ? ` • Profile sync: ${payload.profile_synced_fields.join(', ')}`
+      : '';
+    const metadataSync = payload.auth_metadata_synced ? ' • Auth metadata synced' : '';
+    showNotice(
+      els.usersNotice,
+      `Granted ${granted} achievements and unlocked ${unlocked} badges.${resolved}${profileSync}${metadataSync}`,
+      'success',
+    );
     closeAchievementModal();
     await Promise.all([searchUsers(), loadOverview(), loadAudit()]);
   } catch (error) {

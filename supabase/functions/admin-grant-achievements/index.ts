@@ -31,6 +31,15 @@ function mergeStringArrays(existing: unknown, incoming: string[]) {
   return [...merged];
 }
 
+function mergeStringObjectArray(existing: unknown, incoming: string[]) {
+  if (!existing || typeof existing !== "object" || Array.isArray(existing)) return null;
+  const current = existing as Record<string, unknown>;
+  return {
+    ...current,
+    unlocked_keys: mergeStringArrays(current.unlocked_keys, incoming),
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
   try {
@@ -50,6 +59,7 @@ serve(async (req) => {
     if (profile?.user_id) authIdCandidates.add(String(profile.user_id));
 
     let resolvedAuthUserId: string | null = null;
+    let resolvedAuthUserRecord: any = null;
     for (const candidate of authIdCandidates) {
       if (!looksLikeUuid(candidate)) continue;
       const { data: authResult, error: authError } = await service.auth.admin.getUserById(candidate);
@@ -60,6 +70,7 @@ serve(async (req) => {
       }
       if (authResult?.user) {
         resolvedAuthUserId = candidate;
+        resolvedAuthUserRecord = authResult.user;
         break;
       }
     }
@@ -160,18 +171,72 @@ serve(async (req) => {
         profilePatch.unlocked_badge_keys = mergeStringArrays((syncProfile as any).unlocked_badge_keys, badgeKeys);
       }
       if ("achievements" in syncProfile && (syncProfile as any).achievements && typeof (syncProfile as any).achievements === "object") {
-        const current = (syncProfile as any).achievements as Record<string, unknown>;
-        profilePatch.achievements = {
-          ...current,
-          unlocked_keys: mergeStringArrays(current.unlocked_keys, grantedAchievementKeys),
-          unlocked_badge_keys: mergeStringArrays(current.unlocked_badge_keys, badgeKeys),
-          last_admin_granted_at: nowIso,
-        };
+        if (Array.isArray((syncProfile as any).achievements)) {
+          profilePatch.achievements = mergeStringArrays((syncProfile as any).achievements, grantedAchievementKeys);
+        } else {
+          const current = (syncProfile as any).achievements as Record<string, unknown>;
+          profilePatch.achievements = {
+            ...current,
+            unlocked_keys: mergeStringArrays(current.unlocked_keys, grantedAchievementKeys),
+            unlocked_badge_keys: mergeStringArrays(current.unlocked_badge_keys, badgeKeys),
+            last_admin_granted_at: nowIso,
+          };
+        }
+      }
+      if ("badges" in syncProfile && (syncProfile as any).badges && typeof (syncProfile as any).badges === "object") {
+        if (Array.isArray((syncProfile as any).badges)) {
+          profilePatch.badges = mergeStringArrays((syncProfile as any).badges, badgeKeys);
+        } else {
+          const current = (syncProfile as any).badges as Record<string, unknown>;
+          profilePatch.badges = {
+            ...current,
+            unlocked_keys: mergeStringArrays(current.unlocked_keys, badgeKeys),
+            last_admin_granted_at: nowIso,
+          };
+        }
       }
       if (Object.keys(profilePatch).length) {
         await updateProfileByUserId(service, requestedUserId, profilePatch);
       }
     }
+
+    const userMetadata = (resolvedAuthUserRecord?.user_metadata && typeof resolvedAuthUserRecord.user_metadata === "object")
+      ? { ...resolvedAuthUserRecord.user_metadata }
+      : {};
+    const metadataPatch = {
+      ...userMetadata,
+      achievement_keys: mergeStringArrays(userMetadata.achievement_keys, grantedAchievementKeys),
+      unlocked_achievement_keys: mergeStringArrays(userMetadata.unlocked_achievement_keys, grantedAchievementKeys),
+      badge_keys: mergeStringArrays(userMetadata.badge_keys, badgeKeys),
+      unlocked_badge_keys: mergeStringArrays(userMetadata.unlocked_badge_keys, badgeKeys),
+      achievements: (() => {
+        if (Array.isArray(userMetadata.achievements)) {
+          return mergeStringArrays(userMetadata.achievements, grantedAchievementKeys);
+        }
+        const merged = mergeStringObjectArray(userMetadata.achievements, grantedAchievementKeys);
+        return merged || {
+          unlocked_keys: grantedAchievementKeys,
+          unlocked_badge_keys: badgeKeys,
+          last_admin_granted_at: nowIso,
+        };
+      })(),
+      badges: (() => {
+        if (Array.isArray(userMetadata.badges)) {
+          return mergeStringArrays(userMetadata.badges, badgeKeys);
+        }
+        const merged = mergeStringObjectArray(userMetadata.badges, badgeKeys);
+        return merged || {
+          unlocked_keys: badgeKeys,
+          last_admin_granted_at: nowIso,
+        };
+      })(),
+      last_admin_granted_at: nowIso,
+    };
+
+    const { error: authMetadataError } = await service.auth.admin.updateUserById(resolvedAuthUserId, {
+      user_metadata: metadataPatch,
+    });
+    if (authMetadataError) throw authMetadataError;
 
     await logAdminAction(service, user, "admin_grant_achievements", "profile", requestedUserId, {
       grant_all: Boolean(body.grant_all),
@@ -180,6 +245,7 @@ serve(async (req) => {
       unlocked_badges: badgeUpserts.length,
       resolved_auth_user_id: resolvedAuthUserId,
       profile_synced_fields: Object.keys(profilePatch),
+      auth_metadata_synced: true,
     });
 
     return json({
@@ -189,6 +255,7 @@ serve(async (req) => {
       granted_keys: grantedAchievementKeys,
       resolved_auth_user_id: resolvedAuthUserId,
       profile_synced_fields: Object.keys(profilePatch),
+      auth_metadata_synced: true,
     });
   } catch (err) {
     return error(err instanceof Error ? err.message : "Could not grant achievements.", (err as any)?.status || 500);
