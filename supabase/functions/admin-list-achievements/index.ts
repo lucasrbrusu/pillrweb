@@ -1,21 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsHeaders, error, json, requireAdmin } from "../_shared/admin.ts";
-
-const APP_ACHIEVEMENT_KEYS = [
-  "longest_current_streak",
-  "longest_habit_streak",
-  "total_habit_completions",
-  "total_habits_achieved",
-  "account_age",
-] as const;
-
-const APP_ACHIEVEMENT_DEFAULT_NAMES: Record<string, string> = {
-  longest_current_streak: "Longest Current Streak",
-  longest_habit_streak: "Longest Habit Streak",
-  total_habit_completions: "Total Habit Completions",
-  total_habits_achieved: "Total Habits Achieved",
-  account_age: "Account Age",
-};
+import { APP_ACHIEVEMENT_BY_KEY, APP_ACHIEVEMENT_KEYS } from "../_shared/achievement-catalog.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
@@ -28,16 +13,45 @@ serve(async (req) => {
       .eq("is_active", true);
     if (queryError) throw queryError;
 
-    const indexByKey = new Map(APP_ACHIEVEMENT_KEYS.map((key, index) => [key, index]));
     const achievements = (data || [])
-      .filter((row: any) => Boolean(row?.key) && indexByKey.has(row.key))
+      .map((row: any) => {
+        const definition = APP_ACHIEVEMENT_BY_KEY.get(row.key);
+        if (!definition) return null;
+        return {
+          id: row.id,
+          key: definition.key,
+          name: row.name || definition.name,
+          badge_key: row.badge_key || definition.badge_key,
+          category_key: definition.category_key,
+          category_name: definition.category_name,
+          target_value: definition.target_value,
+          target_label: definition.target_label,
+          sort_order: definition.sort_order,
+        };
+      })
+      .filter((row): row is {
+        id: string;
+        key: string;
+        name: string;
+        badge_key: string;
+        category_key: string;
+        category_name: string;
+        target_value: number;
+        target_label: string;
+        sort_order: number;
+      } => Boolean(row))
+      .sort((a, b) => a.sort_order - b.sort_order)
       .map((row: any) => ({
         id: row.id,
         key: row.key,
-        name: row.name || APP_ACHIEVEMENT_DEFAULT_NAMES[row.key] || row.key,
-        badge_key: row.badge_key || row.key,
+        name: row.name,
+        badge_key: row.badge_key,
+        category_key: row.category_key,
+        category_name: row.category_name,
+        target_value: row.target_value,
+        target_label: row.target_label,
       }))
-      .sort((a, b) => (indexByKey.get(a.key) ?? 999) - (indexByKey.get(b.key) ?? 999));
+      .filter((row) => Boolean(row.key));
 
     return json({ achievements });
   } catch (err) {

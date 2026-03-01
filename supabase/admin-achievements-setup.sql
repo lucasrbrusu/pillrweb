@@ -66,13 +66,63 @@ create policy user_badges_read_own
   using (auth.uid() = user_id);
 
 -- Canonical app achievement catalog used by the admin dashboard.
+-- This creates all tier achievements inside each category.
+drop table if exists tmp_admin_achievement_catalog;
+create temporary table tmp_admin_achievement_catalog (
+  key text primary key,
+  name text not null,
+  badge_key text not null,
+  is_active boolean not null default true
+) on commit drop;
+
+-- Longest current streak tiers.
+insert into tmp_admin_achievement_catalog (key, name, badge_key, is_active)
+select
+  format('longest_current_streak_%s_days', days),
+  format('%s Day Current Streak', days),
+  format('longest_current_streak_%s_days', days),
+  true
+from unnest(array[2, 5, 7, 10, 14, 21, 30, 45, 60, 90, 120, 180, 365]) as days;
+
+-- Longest habit streak tiers.
+insert into tmp_admin_achievement_catalog (key, name, badge_key, is_active)
+select
+  format('longest_habit_streak_%s_days', days),
+  format('%s Day Habit Streak', days),
+  format('longest_habit_streak_%s_days', days),
+  true
+from unnest(array[2, 5, 7, 10, 14, 21, 30, 45, 60, 90, 120, 180, 365]) as days;
+
+-- Total habit completions tiers.
+insert into tmp_admin_achievement_catalog (key, name, badge_key, is_active)
+select
+  format('total_habit_completions_%s', value),
+  format('%s Total Habit Completions', value),
+  format('total_habit_completions_%s', value),
+  true
+from unnest(array[1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]) as value;
+
+-- Total habits achieved tiers.
+insert into tmp_admin_achievement_catalog (key, name, badge_key, is_active)
+select
+  format('total_habits_achieved_%s', value),
+  format('%s Habits Achieved', value),
+  format('total_habits_achieved_%s', value),
+  true
+from unnest(array[1, 3, 5, 10, 20, 30, 50, 75, 100]) as value;
+
+-- Account age tiers.
+insert into tmp_admin_achievement_catalog (key, name, badge_key, is_active)
+select
+  format('account_age_%s_days', days),
+  format('%s Day Account Age', days),
+  format('account_age_%s_days', days),
+  true
+from unnest(array[7, 14, 30, 60, 90, 180, 365, 730, 1095, 1825]) as days;
+
 insert into public.achievements (key, name, badge_key, is_active)
-values
-  ('longest_current_streak', 'Longest Current Streak', 'longest_current_streak', true),
-  ('longest_habit_streak', 'Longest Habit Streak', 'longest_habit_streak', true),
-  ('total_habit_completions', 'Total Habit Completions', 'total_habit_completions', true),
-  ('total_habits_achieved', 'Total Habits Achieved', 'total_habits_achieved', true),
-  ('account_age', 'Account Age', 'account_age', true)
+select key, name, badge_key, is_active
+from tmp_admin_achievement_catalog
 on conflict (key) do update
 set
   name = excluded.name,
@@ -82,10 +132,4 @@ set
 -- Hide legacy/non-app achievement rows from the admin achievement grant modal.
 update public.achievements
 set is_active = false
-where key not in (
-  'longest_current_streak',
-  'longest_habit_streak',
-  'total_habit_completions',
-  'total_habits_achieved',
-  'account_age'
-);
+where key not in (select key from tmp_admin_achievement_catalog);

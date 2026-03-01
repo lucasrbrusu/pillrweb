@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsHeaders, error, json, logAdminAction, readJson, requireAdmin } from "../_shared/admin.ts";
+import { APP_ACHIEVEMENT_KEYS } from "../_shared/achievement-catalog.ts";
 
 type AchievementRow = {
   id: string;
@@ -8,14 +9,6 @@ type AchievementRow = {
   badge_key?: string | null;
   is_active?: boolean | null;
 };
-
-const APP_ACHIEVEMENT_KEYS = [
-  "longest_current_streak",
-  "longest_habit_streak",
-  "total_habit_completions",
-  "total_habits_achieved",
-  "account_age",
-] as const;
 
 const cleanKey = (value: string) => value.trim();
 

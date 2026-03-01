@@ -349,6 +349,43 @@ input:focus, textarea:focus, select:focus {
 .check-list .row {
   justify-content: flex-start;
 }
+.achievement-group {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #faf9fc;
+}
+.achievement-group summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+}
+.achievement-group summary::-webkit-details-marker {
+  display: none;
+}
+.achievement-group summary::after {
+  content: "+";
+  color: var(--muted);
+  font-weight: 800;
+}
+.achievement-group__title {
+  font-weight: 800;
+}
+.achievement-group[open] summary {
+  border-bottom: 1px solid var(--border);
+}
+.achievement-group[open] summary::after {
+  content: "-";
+}
+.achievement-group__items {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
 @media (max-width: 1080px) {
   .shell { grid-template-columns: 1fr; }
   .sidebar { position: static; }

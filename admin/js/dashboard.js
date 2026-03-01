@@ -9,6 +9,14 @@ const state = {
   achievementTargetUserId: null,
 };
 
+const achievementCategoryOrder = [
+  'longest_current_streak',
+  'longest_habit_streak',
+  'total_habit_completions',
+  'total_habits_achieved',
+  'account_age',
+];
+
 const els = {
   adminIdentity: document.getElementById('adminIdentity'),
   permissionNotice: document.getElementById('permissionNotice'),
@@ -169,12 +177,56 @@ function renderAchievementOptions() {
     return;
   }
 
-  els.achievementOptions.innerHTML = items.map((item) => `
-    <label class="row" style="justify-content:flex-start; gap:10px;">
-      <input style="width:auto;" type="checkbox" data-achievement-key="${escapeHtml(item.key)}">
-      <span><strong>${escapeHtml(item.name || item.key)}</strong> <span class="muted">(${escapeHtml(item.key)})</span></span>
-    </label>
-  `).join('');
+  const grouped = new Map();
+  items.forEach((item) => {
+    const categoryKey = String(item.category_key || 'other');
+    const categoryName = String(item.category_name || categoryKey.replaceAll('_', ' '));
+    if (!grouped.has(categoryKey)) {
+      grouped.set(categoryKey, {
+        categoryKey,
+        categoryName,
+        items: [],
+      });
+    }
+    grouped.get(categoryKey).items.push(item);
+  });
+
+  const categoryOrderIndex = (categoryKey) => {
+    const index = achievementCategoryOrder.indexOf(categoryKey);
+    return index === -1 ? 999 : index;
+  };
+
+  const groups = [...grouped.values()]
+    .sort((a, b) => categoryOrderIndex(a.categoryKey) - categoryOrderIndex(b.categoryKey));
+
+  els.achievementOptions.innerHTML = groups.map((group, index) => {
+    const groupItems = [...group.items].sort((a, b) => {
+      const aValue = Number(a.target_value ?? Number.MAX_SAFE_INTEGER);
+      const bValue = Number(b.target_value ?? Number.MAX_SAFE_INTEGER);
+      if (aValue !== bValue) return aValue - bValue;
+      return String(a.name || a.key).localeCompare(String(b.name || b.key));
+    });
+
+    return `
+      <details class="achievement-group" ${index === 0 ? 'open' : ''}>
+        <summary>
+          <span class="achievement-group__title">${escapeHtml(group.categoryName)}</span>
+          <span class="muted">${escapeHtml(String(groupItems.length))} achievements</span>
+        </summary>
+        <div class="achievement-group__items">
+          ${groupItems.map((item) => `
+            <label class="row" style="justify-content:flex-start; gap:10px;">
+              <input style="width:auto;" type="checkbox" data-achievement-key="${escapeHtml(item.key)}">
+              <span>
+                <strong>${escapeHtml(item.name || item.key)}</strong>
+                <span class="muted">(${escapeHtml(item.target_label || item.key)})</span>
+              </span>
+            </label>
+          `).join('')}
+        </div>
+      </details>
+    `;
+  }).join('');
 }
 
 async function loadAchievementCatalog() {
