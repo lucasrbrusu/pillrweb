@@ -314,6 +314,41 @@ input:focus, textarea:focus, select:focus {
   font-size: 14px;
   color: var(--muted);
 }
+.admin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+.admin-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(17,24,39,0.52);
+}
+.admin-modal__panel {
+  position: relative;
+  width: min(680px, calc(100% - 24px));
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  margin: 12px auto;
+  padding: 18px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.check-list {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px;
+  background: #fff;
+  max-height: 260px;
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+}
+.check-list .row {
+  justify-content: flex-start;
+}
 @media (max-width: 1080px) {
   .shell { grid-template-columns: 1fr; }
   .sidebar { position: static; }

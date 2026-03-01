@@ -74,7 +74,7 @@
           <div class="section-head">
             <div>
               <h2>User management</h2>
-              <p>Search users by username, email, full name, or auth UUID. Then grant premium or change account status.</p>
+              <p>Search users by username, email, full name, or auth UUID. Then grant premium, achievements, badges, or change account status.</p>
             </div>
           </div>
           <div id="usersNotice" class="notice"></div>
@@ -90,6 +90,43 @@
           </div>
           <div id="userResults" class="card-list"></div>
           <div id="userEmpty" class="empty-state hidden">No users match this search yet.</div>
+
+          <div id="achievementModal" class="admin-modal hidden" role="dialog" aria-modal="true" aria-labelledby="achievementModalTitle">
+            <div class="admin-modal__backdrop" data-action="close-achievement-modal"></div>
+            <div class="admin-modal__panel">
+              <div class="section-head" style="margin-bottom:12px;">
+                <div>
+                  <h3 id="achievementModalTitle" style="margin:0;">Grant achievements</h3>
+                  <p id="achievementTargetUser" class="muted">User: —</p>
+                </div>
+                <button class="btn outline" type="button" data-action="close-achievement-modal">Close</button>
+              </div>
+
+              <div id="achievementNotice" class="notice"></div>
+
+              <div class="controls">
+                <label>
+                  <div style="margin-bottom:8px;font-weight:700;">Available achievements</div>
+                  <div id="achievementOptions" class="check-list"></div>
+                </label>
+
+                <label class="row" style="justify-content:flex-start; gap: 10px;">
+                  <input id="achievementSelectAll" style="width:auto;" type="checkbox">
+                  <span><strong>Select all available achievements</strong></span>
+                </label>
+
+                <label>
+                  <div style="margin-bottom:8px;font-weight:700;">Custom achievement keys (optional)</div>
+                  <input id="customAchievementInput" type="text" placeholder="comma_separated_key_1, key_2">
+                </label>
+              </div>
+
+              <div class="actions" style="margin-top:16px;">
+                <button class="btn outline" type="button" data-action="close-achievement-modal">Cancel</button>
+                <button class="btn primary" id="grantAchievementsBtn" type="button">Grant Selected</button>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section class="panel tab-panel hidden" data-panel="reports">

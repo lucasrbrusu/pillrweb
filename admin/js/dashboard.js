@@ -5,6 +5,8 @@ const state = {
   admin: null,
   metrics: null,
   selectedTab: 'overview',
+  achievementCatalog: [],
+  achievementTargetUserId: null,
 };
 
 const els = {
@@ -19,6 +21,13 @@ const els = {
   userStatusFilter: document.getElementById('userStatusFilter'),
   userResults: document.getElementById('userResults'),
   userEmpty: document.getElementById('userEmpty'),
+  achievementModal: document.getElementById('achievementModal'),
+  achievementTargetUser: document.getElementById('achievementTargetUser'),
+  achievementNotice: document.getElementById('achievementNotice'),
+  achievementOptions: document.getElementById('achievementOptions'),
+  achievementSelectAll: document.getElementById('achievementSelectAll'),
+  customAchievementInput: document.getElementById('customAchievementInput'),
+  grantAchievementsBtn: document.getElementById('grantAchievementsBtn'),
   reportsTable: document.getElementById('reportsTable'),
   reportsNotice: document.getElementById('reportsNotice'),
   pushNotice: document.getElementById('pushNotice'),
@@ -146,11 +155,110 @@ function renderUsers(users) {
           <button class="btn outline" data-action="remove-premium" data-user-id="${escapeHtml(user.user_id)}">Remove premium</button>
           <button class="btn warning" data-action="suspend" data-user-id="${escapeHtml(user.user_id)}">Suspend 7 days</button>
           <button class="btn outline" data-action="activate" data-user-id="${escapeHtml(user.user_id)}">Restore active</button>
+          <button class="btn primary" data-action="grant-achievement" data-user-id="${escapeHtml(user.user_id)}">Grant Achievement</button>
           <button class="btn danger" data-action="delete-user" data-user-id="${escapeHtml(user.user_id)}">Delete User</button>
         </div>
       </article>
     `;
   }).join('');
+}
+
+function renderAchievementOptions() {
+  const items = state.achievementCatalog || [];
+  if (!items.length) {
+    els.achievementOptions.innerHTML = '<div class="muted">No achievement catalog rows found.</div>';
+    return;
+  }
+
+  els.achievementOptions.innerHTML = items.map((item) => `
+    <label class="row" style="justify-content:flex-start; gap:10px;">
+      <input style="width:auto;" type="checkbox" data-achievement-key="${escapeHtml(item.key)}">
+      <span><strong>${escapeHtml(item.name || item.key)}</strong> <span class="muted">(${escapeHtml(item.key)})</span></span>
+    </label>
+  `).join('');
+}
+
+async function loadAchievementCatalog() {
+  const payload = await invokeFunction('admin-list-achievements', {});
+  state.achievementCatalog = payload.achievements || [];
+  renderAchievementOptions();
+}
+
+function closeAchievementModal() {
+  state.achievementTargetUserId = null;
+  clearNotice(els.achievementNotice);
+  els.achievementModal.classList.add('hidden');
+}
+
+async function openAchievementModal(userId) {
+  state.achievementTargetUserId = userId;
+  clearNotice(els.achievementNotice);
+  els.customAchievementInput.value = '';
+  els.achievementSelectAll.checked = false;
+  els.achievementOptions.innerHTML = '<div class="muted">Loading achievements...</div>';
+  els.achievementTargetUser.textContent = `User: ${userId}`;
+  els.achievementModal.classList.remove('hidden');
+
+  try {
+    await loadAchievementCatalog();
+  } catch (error) {
+    showNotice(els.achievementNotice, error.message || 'Could not load achievements.');
+  }
+}
+
+function selectedAchievementKeys() {
+  const keys = [];
+  els.achievementOptions.querySelectorAll('input[type="checkbox"][data-achievement-key]').forEach((input) => {
+    if (input.checked) keys.push(input.dataset.achievementKey);
+  });
+  return keys;
+}
+
+function customAchievementKeys() {
+  return String(els.customAchievementInput.value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function toggleAchievementOptions(checked) {
+  els.achievementOptions.querySelectorAll('input[type="checkbox"][data-achievement-key]').forEach((input) => {
+    input.checked = checked;
+  });
+}
+
+async function grantAchievements() {
+  clearNotice(els.achievementNotice);
+
+  const grantAll = els.achievementSelectAll.checked;
+  const chosenKeys = selectedAchievementKeys();
+  const customKeys = customAchievementKeys();
+  if (!state.achievementTargetUserId) {
+    showNotice(els.achievementNotice, 'No user selected.');
+    return;
+  }
+
+  if (!grantAll && !chosenKeys.length && !customKeys.length) {
+    showNotice(els.achievementNotice, 'Pick at least one achievement, enable Select all, or add custom keys.');
+    return;
+  }
+
+  try {
+    const payload = await invokeFunction('admin-grant-achievements', {
+      user_id: state.achievementTargetUserId,
+      grant_all: grantAll,
+      achievement_keys: chosenKeys,
+      custom_achievement_keys: customKeys,
+    });
+
+    const granted = payload.granted_achievements || 0;
+    const unlocked = payload.unlocked_badges || 0;
+    showNotice(els.usersNotice, `Granted ${granted} achievements and unlocked ${unlocked} badges.`, 'success');
+    closeAchievementModal();
+    await Promise.all([searchUsers(), loadOverview(), loadAudit()]);
+  } catch (error) {
+    showNotice(els.achievementNotice, error.message || 'Could not grant achievements.');
+  }
 }
 
 function renderReports(reports) {
@@ -249,6 +357,10 @@ async function handleUserAction(action, userId) {
       });
       showNotice(els.usersNotice, 'Premium granted for 30 days.', 'success');
     }
+    if (action === 'grant-achievement') {
+      await openAchievementModal(userId);
+      return;
+    }
     if (action === 'remove-premium') {
       await invokeFunction('admin-update-user-plan', {
         user_id: userId,
@@ -309,6 +421,15 @@ async function bootstrap() {
     const segmentMode = els.pushMode.value === 'segment';
     els.pushUserIdsWrap.classList.toggle('hidden', segmentMode);
     els.pushSegmentWrap.classList.toggle('hidden', !segmentMode);
+  });
+  els.achievementSelectAll.addEventListener('change', () => {
+    toggleAchievementOptions(els.achievementSelectAll.checked);
+  });
+  els.grantAchievementsBtn.addEventListener('click', grantAchievements);
+  els.achievementModal.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-action="close-achievement-modal"]');
+    if (!button) return;
+    closeAchievementModal();
   });
 
   els.userResults.addEventListener('click', async (event) => {
