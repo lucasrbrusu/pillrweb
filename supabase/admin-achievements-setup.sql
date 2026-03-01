@@ -65,11 +65,27 @@ create policy user_badges_read_own
   to authenticated
   using (auth.uid() = user_id);
 
--- Example catalog rows. Extend with your real app achievements.
+-- Canonical app achievement catalog used by the admin dashboard.
 insert into public.achievements (key, name, badge_key, is_active)
 values
-  ('first_login', 'First Login', 'first_login', true),
-  ('profile_complete', 'Profile Complete', 'profile_complete', true),
-  ('streak_7', '7 Day Streak', 'streak_7', true),
-  ('streak_30', '30 Day Streak', 'streak_30', true)
-on conflict (key) do nothing;
+  ('longest_current_streak', 'Longest Current Streak', 'longest_current_streak', true),
+  ('longest_habit_streak', 'Longest Habit Streak', 'longest_habit_streak', true),
+  ('total_habit_completions', 'Total Habit Completions', 'total_habit_completions', true),
+  ('total_habits_achieved', 'Total Habits Achieved', 'total_habits_achieved', true),
+  ('account_age', 'Account Age', 'account_age', true)
+on conflict (key) do update
+set
+  name = excluded.name,
+  badge_key = excluded.badge_key,
+  is_active = excluded.is_active;
+
+-- Hide legacy/non-app achievement rows from the admin achievement grant modal.
+update public.achievements
+set is_active = false
+where key not in (
+  'longest_current_streak',
+  'longest_habit_streak',
+  'total_habit_completions',
+  'total_habits_achieved',
+  'account_age'
+);

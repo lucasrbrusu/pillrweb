@@ -9,6 +9,14 @@ type AchievementRow = {
   is_active?: boolean | null;
 };
 
+const APP_ACHIEVEMENT_KEYS = [
+  "longest_current_streak",
+  "longest_habit_streak",
+  "total_habit_completions",
+  "total_habits_achieved",
+  "account_age",
+] as const;
+
 const cleanKey = (value: string) => value.trim();
 
 serve(async (req) => {
@@ -30,7 +38,9 @@ serve(async (req) => {
 
     const { data: catalogRows, error: catalogError } = await service
       .from("achievements")
-      .select("id,key,name,badge_key,is_active");
+      .select("id,key,name,badge_key,is_active")
+      .in("key", [...APP_ACHIEVEMENT_KEYS])
+      .eq("is_active", true);
     if (catalogError) throw catalogError;
 
     const catalog = ((catalogRows || []) as AchievementRow[])
