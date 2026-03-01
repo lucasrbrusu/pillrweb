@@ -146,7 +146,7 @@ function renderUsers(users) {
           <button class="btn outline" data-action="remove-premium" data-user-id="${escapeHtml(user.user_id)}">Remove premium</button>
           <button class="btn warning" data-action="suspend" data-user-id="${escapeHtml(user.user_id)}">Suspend 7 days</button>
           <button class="btn outline" data-action="activate" data-user-id="${escapeHtml(user.user_id)}">Restore active</button>
-          <button class="btn danger" data-action="delete-user" data-user-id="${escapeHtml(user.user_id)}">Delete user</button>
+          <button class="btn danger" data-action="delete-user" data-user-id="${escapeHtml(user.user_id)}">Delete User</button>
         </div>
       </article>
     `;
