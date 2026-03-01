@@ -9,7 +9,7 @@ type AchievementRow = {
   is_active?: boolean | null;
 };
 
-const normalizeKey = (value: string) => value.trim().toLowerCase().replace(/\s+/g, "_");
+const cleanKey = (value: string) => value.trim();
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
@@ -19,7 +19,6 @@ serve(async (req) => {
       user_id?: string;
       grant_all?: boolean;
       achievement_keys?: string[];
-      custom_achievement_keys?: string[];
     };
 
     const userId = String(body.user_id || "").trim();
@@ -34,60 +33,39 @@ serve(async (req) => {
       .select("id,key,name,badge_key,is_active");
     if (catalogError) throw catalogError;
 
-    const catalog = (catalogRows || []) as AchievementRow[];
+    const catalog = ((catalogRows || []) as AchievementRow[])
+      .filter((row) => row?.is_active !== false && Boolean(row?.key));
     const catalogByKey = new Map<string, AchievementRow>();
     for (const row of catalog) {
       if (!row.key) continue;
-      catalogByKey.set(normalizeKey(row.key), row);
+      catalogByKey.set(cleanKey(row.key), row);
     }
 
     const requested = new Set<string>();
     if (body.grant_all) {
       for (const row of catalog) {
-        if (row.is_active === false) continue;
-        if (row.key) requested.add(normalizeKey(row.key));
+        if (row.key) requested.add(cleanKey(row.key));
       }
     }
 
     for (const key of body.achievement_keys || []) {
-      const normalized = normalizeKey(String(key || ""));
-      if (normalized) requested.add(normalized);
-    }
-
-    const customKeys: string[] = [];
-    for (const key of body.custom_achievement_keys || []) {
-      const normalized = normalizeKey(String(key || ""));
-      if (!normalized) continue;
-      requested.add(normalized);
-      customKeys.push(normalized);
+      const cleaned = cleanKey(String(key || ""));
+      if (cleaned) requested.add(cleaned);
     }
 
     if (!requested.size) {
-      return error("No achievements requested. Select one, select all, or provide custom keys.", 400);
+      return error("No achievements requested. Select one or use select all.", 400);
     }
 
-    const missingKeys = [...requested].filter((key) => !catalogByKey.has(key));
-    if (missingKeys.length) {
-      const rows = missingKeys.map((key) => ({
-        key,
-        name: key.replaceAll("_", " "),
-        badge_key: key,
-        is_active: true,
-      }));
-      const { error: createCustomError } = await service
-        .from("achievements")
-        .upsert(rows, { onConflict: "key" });
-      if (createCustomError) throw createCustomError;
+    const invalidKeys = [...requested].filter((key) => !catalogByKey.has(key));
+    if (invalidKeys.length) {
+      return error(`Invalid achievement keys requested: ${invalidKeys.join(", ")}`, 400);
     }
 
     const requestedKeyList = [...requested];
-    const { data: finalCatalogRows, error: finalCatalogError } = await service
-      .from("achievements")
-      .select("id,key,name,badge_key,is_active")
-      .in("key", requestedKeyList);
-    if (finalCatalogError) throw finalCatalogError;
-
-    const finalCatalog = (finalCatalogRows || []) as AchievementRow[];
+    const finalCatalog = requestedKeyList
+      .map((key) => catalogByKey.get(key))
+      .filter((row): row is AchievementRow => Boolean(row));
     if (!finalCatalog.length) {
       return error("No achievements could be resolved for grant.", 400);
     }
@@ -126,7 +104,6 @@ serve(async (req) => {
     await logAdminAction(service, user, "admin_grant_achievements", "profile", userId, {
       grant_all: Boolean(body.grant_all),
       requested_keys: requestedKeyList,
-      custom_keys: customKeys,
       granted_achievements: achievementUpserts.length,
       unlocked_badges: badgeUpserts.length,
     });

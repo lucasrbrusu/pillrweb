@@ -26,7 +26,6 @@ const els = {
   achievementNotice: document.getElementById('achievementNotice'),
   achievementOptions: document.getElementById('achievementOptions'),
   achievementSelectAll: document.getElementById('achievementSelectAll'),
-  customAchievementInput: document.getElementById('customAchievementInput'),
   grantAchievementsBtn: document.getElementById('grantAchievementsBtn'),
   reportsTable: document.getElementById('reportsTable'),
   reportsNotice: document.getElementById('reportsNotice'),
@@ -193,7 +192,6 @@ function closeAchievementModal() {
 async function openAchievementModal(userId) {
   state.achievementTargetUserId = userId;
   clearNotice(els.achievementNotice);
-  els.customAchievementInput.value = '';
   els.achievementSelectAll.checked = false;
   els.achievementOptions.innerHTML = '<div class="muted">Loading achievements...</div>';
   els.achievementTargetUser.textContent = `User: ${userId}`;
@@ -214,13 +212,6 @@ function selectedAchievementKeys() {
   return keys;
 }
 
-function customAchievementKeys() {
-  return String(els.customAchievementInput.value || '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 function toggleAchievementOptions(checked) {
   els.achievementOptions.querySelectorAll('input[type="checkbox"][data-achievement-key]').forEach((input) => {
     input.checked = checked;
@@ -232,14 +223,13 @@ async function grantAchievements() {
 
   const grantAll = els.achievementSelectAll.checked;
   const chosenKeys = selectedAchievementKeys();
-  const customKeys = customAchievementKeys();
   if (!state.achievementTargetUserId) {
     showNotice(els.achievementNotice, 'No user selected.');
     return;
   }
 
-  if (!grantAll && !chosenKeys.length && !customKeys.length) {
-    showNotice(els.achievementNotice, 'Pick at least one achievement, enable Select all, or add custom keys.');
+  if (!grantAll && !chosenKeys.length) {
+    showNotice(els.achievementNotice, 'Pick at least one achievement or enable Select all.');
     return;
   }
 
@@ -248,7 +238,6 @@ async function grantAchievements() {
       user_id: state.achievementTargetUserId,
       grant_all: grantAll,
       achievement_keys: chosenKeys,
-      custom_achievement_keys: customKeys,
     });
 
     const granted = payload.granted_achievements || 0;
