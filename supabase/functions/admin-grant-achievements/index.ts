@@ -22,6 +22,18 @@ type AchievementRow = {
 const cleanKey = (value: string) => value.trim();
 const looksLikeUuid = (value: string) => /^[0-9a-fA-F-]{36}$/.test(value);
 
+function uniqueUuidValues(values: Array<string | null | undefined>) {
+  const ordered: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of values) {
+    const value = String(raw || "").trim();
+    if (!looksLikeUuid(value) || seen.has(value)) continue;
+    seen.add(value);
+    ordered.push(value);
+  }
+  return ordered;
+}
+
 function mergeStringArrays(existing: unknown, incoming: string[]) {
   const current = Array.isArray(existing)
     ? existing.map((item) => String(item || "").trim()).filter(Boolean)
@@ -75,8 +87,14 @@ serve(async (req) => {
       }
     }
 
-    if (!resolvedAuthUserId) {
-      return error("User not found in Auth. Use an auth user id or a profile linked by user_id.", 404);
+    const unlockOwnerCandidates = uniqueUuidValues([
+      profile?.id ? String(profile.id) : null,
+      profile?.user_id ? String(profile.user_id) : null,
+      requestedUserId,
+      resolvedAuthUserId,
+    ]);
+    if (!unlockOwnerCandidates.length) {
+      return error("Could not resolve a valid account/user id for achievement grant.", 400);
     }
 
     const { data: catalogRows, error: catalogError } = await service
@@ -125,37 +143,79 @@ serve(async (req) => {
 
     const nowIso = new Date().toISOString();
     const grantedAchievementKeys = finalCatalog.map((row) => row.key);
-    const achievementUpserts = finalCatalog.map((row) => ({
-      user_id: resolvedAuthUserId,
-      achievement_id: row.id,
-      achievement_key: row.key,
-      unlocked_at: nowIso,
-      source: "admin_panel",
-      granted_by: user.id,
-    }));
+    let unlockedOwnerId: string | null = null;
+    let lastUnlockOwnerError: any = null;
 
-    const { error: userAchievementError } = await service
-      .from("user_achievements")
-      .upsert(achievementUpserts, { onConflict: "user_id,achievement_key" });
-    if (userAchievementError) throw userAchievementError;
+    for (const ownerId of unlockOwnerCandidates) {
+      const achievementUpserts = finalCatalog.map((row) => ({
+        user_id: ownerId,
+        achievement_id: row.id,
+        achievement_key: row.key,
+        unlocked_at: nowIso,
+        source: "admin_panel",
+        granted_by: user.id,
+      }));
 
-    const badgeKeys = [...new Set(finalCatalog.map((row) => row.badge_key || row.key).filter(Boolean))];
-    const badgeUpserts = badgeKeys.map((badgeKey) => ({
-      user_id: resolvedAuthUserId,
-      badge_key: badgeKey,
-      unlocked_at: nowIso,
-      source: "achievement_granted_by_admin",
-      granted_by: user.id,
-    }));
+      const { error: userAchievementError } = await service
+        .from("user_achievements")
+        .upsert(achievementUpserts, { onConflict: "user_id,achievement_key" });
 
-    if (badgeUpserts.length) {
-      const { error: userBadgeError } = await service
-        .from("user_badges")
-        .upsert(badgeUpserts, { onConflict: "user_id,badge_key" });
-      if (userBadgeError) throw userBadgeError;
+      if (!userAchievementError) {
+        unlockedOwnerId = ownerId;
+        break;
+      }
+
+      const message = String(userAchievementError.message || "").toLowerCase();
+      const ownerMismatch = userAchievementError.code === "23503" || message.includes("foreign key");
+      if (ownerMismatch) {
+        lastUnlockOwnerError = userAchievementError;
+        continue;
+      }
+      throw userAchievementError;
     }
 
-    const syncProfile = profile || await getProfileByUserId(service, resolvedAuthUserId);
+    if (!unlockedOwnerId) {
+      throw lastUnlockOwnerError || new Error("Could not resolve grant owner for user_achievements.");
+    }
+
+    const badgeKeys = [...new Set(finalCatalog.map((row) => row.badge_key || row.key).filter(Boolean))];
+    const badgeOwnerCandidates = uniqueUuidValues([unlockedOwnerId, ...unlockOwnerCandidates]);
+    let unlockedBadgeCount = 0;
+
+    if (badgeKeys.length) {
+      let lastBadgeOwnerError: any = null;
+      let badgeOwnerResolved = false;
+      for (const ownerId of badgeOwnerCandidates) {
+        const badgeUpserts = badgeKeys.map((badgeKey) => ({
+          user_id: ownerId,
+          badge_key: badgeKey,
+          unlocked_at: nowIso,
+          source: "achievement_granted_by_admin",
+          granted_by: user.id,
+        }));
+        const { error: userBadgeError } = await service
+          .from("user_badges")
+          .upsert(badgeUpserts, { onConflict: "user_id,badge_key" });
+        if (!userBadgeError) {
+          unlockedOwnerId = ownerId;
+          unlockedBadgeCount = badgeUpserts.length;
+          badgeOwnerResolved = true;
+          break;
+        }
+        const message = String(userBadgeError.message || "").toLowerCase();
+        const ownerMismatch = userBadgeError.code === "23503" || message.includes("foreign key");
+        if (ownerMismatch) {
+          lastBadgeOwnerError = userBadgeError;
+          continue;
+        }
+        throw userBadgeError;
+      }
+      if (!badgeOwnerResolved) {
+        throw lastBadgeOwnerError || new Error("Could not resolve grant owner for user_badges.");
+      }
+    }
+
+    const syncProfile = profile || (resolvedAuthUserId ? await getProfileByUserId(service, resolvedAuthUserId) : null);
     const profilePatch: Record<string, unknown> = {};
     if (syncProfile) {
       if ("achievement_keys" in syncProfile) {
@@ -170,11 +230,14 @@ serve(async (req) => {
       if ("unlocked_badge_keys" in syncProfile) {
         profilePatch.unlocked_badge_keys = mergeStringArrays((syncProfile as any).unlocked_badge_keys, badgeKeys);
       }
-      if ("achievements" in syncProfile && (syncProfile as any).achievements && typeof (syncProfile as any).achievements === "object") {
-        if (Array.isArray((syncProfile as any).achievements)) {
-          profilePatch.achievements = mergeStringArrays((syncProfile as any).achievements, grantedAchievementKeys);
+      if ("achievements" in syncProfile) {
+        const currentAchievements = (syncProfile as any).achievements;
+        if (Array.isArray(currentAchievements)) {
+          profilePatch.achievements = mergeStringArrays(currentAchievements, grantedAchievementKeys);
         } else {
-          const current = (syncProfile as any).achievements as Record<string, unknown>;
+          const current = (currentAchievements && typeof currentAchievements === "object")
+            ? currentAchievements as Record<string, unknown>
+            : {};
           profilePatch.achievements = {
             ...current,
             unlocked_keys: mergeStringArrays(current.unlocked_keys, grantedAchievementKeys),
@@ -183,11 +246,14 @@ serve(async (req) => {
           };
         }
       }
-      if ("badges" in syncProfile && (syncProfile as any).badges && typeof (syncProfile as any).badges === "object") {
-        if (Array.isArray((syncProfile as any).badges)) {
-          profilePatch.badges = mergeStringArrays((syncProfile as any).badges, badgeKeys);
+      if ("badges" in syncProfile) {
+        const currentBadges = (syncProfile as any).badges;
+        if (Array.isArray(currentBadges)) {
+          profilePatch.badges = mergeStringArrays(currentBadges, badgeKeys);
         } else {
-          const current = (syncProfile as any).badges as Record<string, unknown>;
+          const current = (currentBadges && typeof currentBadges === "object")
+            ? currentBadges as Record<string, unknown>
+            : {};
           profilePatch.badges = {
             ...current,
             unlocked_keys: mergeStringArrays(current.unlocked_keys, badgeKeys),
@@ -200,62 +266,68 @@ serve(async (req) => {
       }
     }
 
-    const userMetadata = (resolvedAuthUserRecord?.user_metadata && typeof resolvedAuthUserRecord.user_metadata === "object")
-      ? { ...resolvedAuthUserRecord.user_metadata }
-      : {};
-    const metadataPatch = {
-      ...userMetadata,
-      achievement_keys: mergeStringArrays(userMetadata.achievement_keys, grantedAchievementKeys),
-      unlocked_achievement_keys: mergeStringArrays(userMetadata.unlocked_achievement_keys, grantedAchievementKeys),
-      badge_keys: mergeStringArrays(userMetadata.badge_keys, badgeKeys),
-      unlocked_badge_keys: mergeStringArrays(userMetadata.unlocked_badge_keys, badgeKeys),
-      achievements: (() => {
-        if (Array.isArray(userMetadata.achievements)) {
-          return mergeStringArrays(userMetadata.achievements, grantedAchievementKeys);
-        }
-        const merged = mergeStringObjectArray(userMetadata.achievements, grantedAchievementKeys);
-        return merged || {
-          unlocked_keys: grantedAchievementKeys,
-          unlocked_badge_keys: badgeKeys,
-          last_admin_granted_at: nowIso,
-        };
-      })(),
-      badges: (() => {
-        if (Array.isArray(userMetadata.badges)) {
-          return mergeStringArrays(userMetadata.badges, badgeKeys);
-        }
-        const merged = mergeStringObjectArray(userMetadata.badges, badgeKeys);
-        return merged || {
-          unlocked_keys: badgeKeys,
-          last_admin_granted_at: nowIso,
-        };
-      })(),
-      last_admin_granted_at: nowIso,
-    };
+    let authMetadataSynced = false;
+    if (resolvedAuthUserId) {
+      const userMetadata = (resolvedAuthUserRecord?.user_metadata && typeof resolvedAuthUserRecord.user_metadata === "object")
+        ? { ...resolvedAuthUserRecord.user_metadata }
+        : {};
+      const metadataPatch = {
+        ...userMetadata,
+        achievement_keys: mergeStringArrays(userMetadata.achievement_keys, grantedAchievementKeys),
+        unlocked_achievement_keys: mergeStringArrays(userMetadata.unlocked_achievement_keys, grantedAchievementKeys),
+        badge_keys: mergeStringArrays(userMetadata.badge_keys, badgeKeys),
+        unlocked_badge_keys: mergeStringArrays(userMetadata.unlocked_badge_keys, badgeKeys),
+        achievements: (() => {
+          if (Array.isArray(userMetadata.achievements)) {
+            return mergeStringArrays(userMetadata.achievements, grantedAchievementKeys);
+          }
+          const merged = mergeStringObjectArray(userMetadata.achievements, grantedAchievementKeys);
+          return merged || {
+            unlocked_keys: grantedAchievementKeys,
+            unlocked_badge_keys: badgeKeys,
+            last_admin_granted_at: nowIso,
+          };
+        })(),
+        badges: (() => {
+          if (Array.isArray(userMetadata.badges)) {
+            return mergeStringArrays(userMetadata.badges, badgeKeys);
+          }
+          const merged = mergeStringObjectArray(userMetadata.badges, badgeKeys);
+          return merged || {
+            unlocked_keys: badgeKeys,
+            last_admin_granted_at: nowIso,
+          };
+        })(),
+        last_admin_granted_at: nowIso,
+      };
 
-    const { error: authMetadataError } = await service.auth.admin.updateUserById(resolvedAuthUserId, {
-      user_metadata: metadataPatch,
-    });
-    if (authMetadataError) throw authMetadataError;
+      const { error: authMetadataError } = await service.auth.admin.updateUserById(resolvedAuthUserId, {
+        user_metadata: metadataPatch,
+      });
+      if (authMetadataError) throw authMetadataError;
+      authMetadataSynced = true;
+    }
 
     await logAdminAction(service, user, "admin_grant_achievements", "profile", requestedUserId, {
       grant_all: Boolean(body.grant_all),
       requested_keys: requestedKeyList,
-      granted_achievements: achievementUpserts.length,
-      unlocked_badges: badgeUpserts.length,
+      granted_achievements: finalCatalog.length,
+      unlocked_badges: unlockedBadgeCount,
+      unlock_owner_id: unlockedOwnerId,
       resolved_auth_user_id: resolvedAuthUserId,
       profile_synced_fields: Object.keys(profilePatch),
-      auth_metadata_synced: true,
+      auth_metadata_synced: authMetadataSynced,
     });
 
     return json({
       success: true,
-      granted_achievements: achievementUpserts.length,
-      unlocked_badges: badgeUpserts.length,
+      granted_achievements: finalCatalog.length,
+      unlocked_badges: unlockedBadgeCount,
       granted_keys: grantedAchievementKeys,
+      unlock_owner_id: unlockedOwnerId,
       resolved_auth_user_id: resolvedAuthUserId,
       profile_synced_fields: Object.keys(profilePatch),
-      auth_metadata_synced: true,
+      auth_metadata_synced: authMetadataSynced,
     });
   } catch (err) {
     return error(err instanceof Error ? err.message : "Could not grant achievements.", (err as any)?.status || 500);
