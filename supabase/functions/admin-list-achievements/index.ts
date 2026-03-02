@@ -22,6 +22,9 @@ serve(async (req) => {
           key: definition.key,
           name: row.name || definition.name,
           badge_key: row.badge_key || definition.badge_key,
+          app_badge_id: definition.app_badge_id,
+          app_achievement_key: definition.app_achievement_key,
+          app_milestone_value: definition.app_milestone_value,
           category_key: definition.category_key,
           category_name: definition.category_name,
           target_value: definition.target_value,
@@ -34,6 +37,9 @@ serve(async (req) => {
         key: string;
         name: string;
         badge_key: string;
+        app_badge_id: string;
+        app_achievement_key: string;
+        app_milestone_value: number;
         category_key: string;
         category_name: string;
         target_value: number;
@@ -46,6 +52,9 @@ serve(async (req) => {
         key: row.key,
         name: row.name,
         badge_key: row.badge_key,
+        app_badge_id: row.app_badge_id,
+        app_achievement_key: row.app_achievement_key,
+        app_milestone_value: row.app_milestone_value,
         category_key: row.category_key,
         category_name: row.category_name,
         target_value: row.target_value,

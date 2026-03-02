@@ -35,7 +35,7 @@ serve(async (req) => {
     const { data, error: queryError } = await builder;
     if (queryError) throw queryError;
 
-    const userIds = (data || []).map((row: any) => row.id || row.user_id).filter(Boolean);
+    const userIds = (data || []).map((row: any) => row.user_id || row.id).filter(Boolean);
     let tokenCounts = new Map<string, number>();
     if (userIds.length) {
       const { data: tokens } = await service
@@ -48,7 +48,7 @@ serve(async (req) => {
     }
 
     const users = (data || []).map((row: any) => {
-      const resolvedUserId = row.id || row.user_id;
+      const resolvedUserId = row.user_id || row.id;
       return {
         ...row,
         user_id: resolvedUserId,
